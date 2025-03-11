@@ -41,7 +41,9 @@ Der Button "Generate" erstellt ein neues Labyrinth, der Button "Solve" sucht den
 
 Die wichtigsten Komponenten des Codes:
 generateMaze() → Erstellt ein zufälliges Labyrinth mit DFS
+
 solveMaze() → Findet einen Weg durch das Labyrinth mit DFS
+
 updateCell(x, y, Color color) → Aktualisiert die Farbe einer Zelle
 
 
