@@ -1,9 +1,9 @@
-import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.util.ArrayList;
 import java.util.Random;
 import java.util.Stack;
+import javax.swing.*;
 
 public class mazeDFS extends JFrame {
 
@@ -83,6 +83,7 @@ public class mazeDFS extends JFrame {
         * wenn ja --> nix tun
         * wenn nein --> generieren
          */
+        
         if (!solving && !generating) {
             new Thread(new Runnable() {
                 public void run() {
@@ -111,9 +112,9 @@ public class mazeDFS extends JFrame {
         Stack<int[]> stack = new Stack<>();
         Random random = new Random();
 
-        // startpunkt des dfs-alg. zur generierung, hier: oben links
+        // startpunkt des dfs-alg. zur generierung, hier: oben rechts
         int startX = 1;
-        int startY = 1;
+        int startY = SIZE - 2;
 
         visited[startX][startY] = true;
         stack.push(new int[]{startX, startY});
@@ -142,13 +143,13 @@ public class mazeDFS extends JFrame {
             // zufaelligen nachbarn auswaehlen
             if (neighbors.isEmpty() == false) {
                 int[] next = neighbors.get(random.nextInt(neighbors.size()));
-                int nx = next[0];
-                int ny = next[1];
+                int nextX = next[0];
+                int nextY = next[1];
 
-                updateCell((x + nx) / 2, (y + ny) / 2, Color.WHITE);  // mauer entfernen, damit die beiden zellen verbunden werden
-                updateCell(nx, ny, Color.WHITE);  // weiss färben
+                updateCell((x + nextX) / 2, (y + nextY) / 2, Color.WHITE);  // mauer entfernen, damit die beiden zellen verbunden werden
+                updateCell(nextX, nextY, Color.WHITE);  // weiss faerben
 
-                visited[nx][ny] = true;
+                visited[nextX][nextY] = true;
                 stack.push(next);
             } else {
                 stack.pop();
@@ -167,7 +168,85 @@ public class mazeDFS extends JFrame {
 
 
     private void solveMazeButton(ActionEvent e) {
-        //TODO
+        /*
+        * ueberprüfen, ob bereits generiert oder geloest wird
+        * wenn ja --> nix tun
+        * wenn nein --> loesen
+         */
+        if (!solving && !generating) {
+            new Thread(new Runnable() {
+                public void run() {
+                    solveMaze();
+                }
+            }).start();
+        } else {
+            // wenn bereits eins erstellt wird oder eins geloest wird, mach nichts
+            return;
+        }
+    }
+
+    private void solveMaze() {
+        solving = true;
+
+        // dfs stack fuer loesungsdfs
+        Stack<int[]> stack = new Stack<>();
+        boolean[][] visited = new boolean[SIZE][SIZE];
+
+        // start
+        int startX = 1;
+        int startY = 1;
+
+        // ziel
+        int endX = SIZE - 2; // -2, damit da SIZE - 1 die aeussere mauer ist
+        int endY = SIZE - 2;
+
+        stack.push(new int[]{startX, startY});
+        visited[startX][startY] = true;
+        updateCell(startX, startY, Color.MAGENTA);
+
+        // beim loesen muessen keine waende uebersprungen werden, deswegen nur +-1
+        int[][] directions = {{0, 1}, {1, 0}, {0, -1}, {-1, 0}}; 
+
+        while (!stack.isEmpty()) {
+            // "peek" erklaerung in der generatingMaze funktion
+            int[] current = stack.peek();
+            int x = current[0];
+            int y = current[1];
+
+            // moved checkt, ob sich weiterbewegt werden kann oder nicht
+            boolean moved = false;
+            if (x == endX && y == endY) {
+                // beenden wenn ende erreicht ist
+                updateCell(endX, endY, Color.RED);
+                break;
+            }
+
+            for (int[] direction : directions) {
+                int neighborX = x + direction[0];
+                int neighborY = y + direction[1];
+
+                // gucken, ob zelle weg ist (white) und im bereich liegt
+                if (neighborX >= 0 && neighborY >= 0 && neighborX < SIZE && neighborY < SIZE && visited[neighborX][neighborY] == false && maze[neighborX][neighborY].getBackground().equals(Color.WHITE)) {
+                    stack.push(new int[]{neighborX, neighborY});
+                    visited[neighborX][neighborY] = true;
+                    updateCell(neighborX, neighborY, Color.MAGENTA);
+                    moved = true;
+                    break;
+                }
+            }
+
+            if (!moved) {
+                stack.pop(); // zurueckgehen wenn keine wege mehr verfuegbar sind (dfs halt)
+                updateCell(x, y, Color.GRAY); // ungueltiger weg grau makieren
+            }
+
+            try {
+                Thread.sleep(DELAY);
+            } catch (InterruptedException ex) {
+                ex.printStackTrace();
+            }
+        }
+        solving = false;
     }
 
     // aendern der farbe von zelle
